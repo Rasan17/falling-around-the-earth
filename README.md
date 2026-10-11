@@ -8,6 +8,8 @@ Interactive models and animations showing:
 
 Open `index.html` in a browser, or view it online via GitHub Pages.
 
-Created by Dr Ganesalingam Narenthiran.
+Created by Dr Ganesalingam Narenthiran, BSc(MedSci) MB ChB MECS(Ed.) FEBNS FRCS(SN).
+
+Contact: g_narenthiran@hotmail.com
 
 © 2026 Dr Ganesalingam Narenthiran. All rights reserved. No part of this work may be reproduced or redistributed without the author's permission.
