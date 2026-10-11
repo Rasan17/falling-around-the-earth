@@ -1,0 +1,1048 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="author" content="Dr Ganesalingam Narenthiran">
+<meta name="description" content="Interactive models of a rocket launch into orbit, why sideways speed keeps a spacecraft in orbit, and how free fall shifts CSF in the head (SANS).">
+<meta charset="utf-8">
+<title>Falling Around the Earth</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@600;800&family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;1,400&display=swap" rel="stylesheet">
+<style>
+/* Layout: one reading column; each chapter pairs a dark "mission display" screen with a side panel of live readouts */
+:root{
+  --bg:#edf0f2; --panel:#ffffff; --ink:#15212c; --muted:#56636f; --rule:#d2d9df;
+  --accent:#c4531d; --csf:#1d7ca3; --scene:#070d16; --scene-ink:#d6e2ec;
+  --chip-bg:#e3e8ec;
+  --display:"Big Shoulders Display","Arial Narrow",Impact,sans-serif;
+  --body:"IBM Plex Sans",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --mono:"IBM Plex Mono",ui-monospace,Menlo,Consolas,monospace;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#0b1118; --panel:#121b25; --ink:#e1e8ee; --muted:#93a2b0; --rule:#26333f;
+    --accent:#f08a4b; --csf:#55b8dc; --scene:#050a11; --scene-ink:#d6e2ec; --chip-bg:#1a2531;
+    color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#0b1118; --panel:#121b25; --ink:#e1e8ee; --muted:#93a2b0; --rule:#26333f;
+  --accent:#f08a4b; --csf:#55b8dc; --scene:#050a11; --scene-ink:#d6e2ec; --chip-bg:#1a2531;
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+body{margin:0;background:var(--bg);color:var(--ink);font:400 16px/1.6 var(--body)}
+.wrap{max-width:1120px;margin:0 auto;padding-inline:20px;padding-block:40px 64px;display:flex;flex-direction:column;gap:64px}
+h1,h2,h3{font-family:var(--display);font-weight:800;line-height:1;margin:0;text-wrap:balance;letter-spacing:.01em}
+h1{font-size:clamp(2.8rem,8vw,5.2rem);text-transform:uppercase}
+h2{font-size:clamp(1.8rem,4.4vw,2.6rem);text-transform:uppercase}
+h3{font-size:1.25rem;text-transform:uppercase;letter-spacing:.04em}
+p{margin:0}
+.eyebrow{font:500 .78rem/1 var(--mono);letter-spacing:.14em;text-transform:uppercase;color:var(--accent)}
+.mast{display:flex;flex-direction:column;gap:18px}
+.lede{max-width:66ch;font-size:1.08rem;color:var(--ink)}
+.facts{list-style:none;margin:8px 0 0;padding:0;display:grid;grid-template-columns:repeat(4,minmax(0,1fr));border-top:2px solid var(--ink)}
+.facts li{padding:12px 14px 0 0;display:flex;flex-direction:column;gap:2px;border-right:1px solid var(--rule);padding-left:14px}
+.facts li:first-child{padding-left:0}
+.facts li:last-child{border-right:0}
+.facts b{font:800 2rem/1.05 var(--display);letter-spacing:.02em}
+.facts span{font-size:.85rem;color:var(--muted);line-height:1.35}
+@media (max-width:700px){.facts{grid-template-columns:repeat(2,minmax(0,1fr))}.facts li{border-right:0;padding-left:0}}
+
+.chapter{display:flex;flex-direction:column;gap:20px}
+.chap-head{display:grid;grid-template-columns:auto minmax(0,1fr);gap:18px;align-items:start;border-top:2px solid var(--ink);padding-top:16px}
+.num{font:800 3.4rem/.85 var(--display);color:var(--accent)}
+.chap-head > div{display:flex;flex-direction:column;gap:10px}
+.chap-head p{max-width:70ch;color:var(--muted)}
+
+.stage{display:grid;grid-template-columns:minmax(0,1fr) 300px;gap:18px;align-items:start}
+@media (max-width:860px){.stage{grid-template-columns:minmax(0,1fr)}}
+.screen{background:var(--scene);border-radius:10px;overflow:hidden;position:relative;min-width:0}
+.screen canvas{display:block;width:100%;max-width:100%}
+.c-wide{aspect-ratio:16/10}
+.c-orbit{aspect-ratio:1/1.02;max-height:640px}
+.c-43{aspect-ratio:4/3}
+.c-chart{aspect-ratio:16/9}
+
+.side{display:flex;flex-direction:column;gap:16px;min-width:0}
+.ro{display:grid;grid-template-columns:1fr 1fr;gap:12px 14px;margin:0;padding:14px;background:var(--panel);border:1px solid var(--rule);border-radius:8px}
+.ro div{display:flex;flex-direction:column;gap:2px;min-width:0}
+.ro dt{font:500 .68rem/1.2 var(--mono);letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
+.ro dd{margin:0;font:500 1.15rem/1.2 var(--mono);font-variant-numeric:tabular-nums;white-space:nowrap}
+.ro dd small{font-size:.72rem;color:var(--muted);margin-left:3px}
+.ro .wide{grid-column:1/-1}
+
+.phases{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;border-left:2px solid var(--rule)}
+.phases li{padding:7px 0 7px 14px;margin-left:-2px;border-left:2px solid transparent;cursor:pointer;color:var(--muted);transition:color .2s,border-color .2s}
+.phases li b{display:block;font-weight:600;font-size:.92rem;color:inherit}
+.phases li span{display:none;font-size:.86rem;line-height:1.45}
+.phases li.on{border-left-color:var(--accent);color:var(--ink)}
+.phases li.on span{display:block}
+.phases li:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+
+.controls{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
+button{font:500 .88rem/1 var(--body);padding:9px 14px;border-radius:6px;border:1px solid var(--rule);background:var(--panel);color:var(--ink);cursor:pointer}
+button:hover{border-color:var(--ink)}
+button:focus-visible,input:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+button.primary{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+button[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:#fff}
+input[type=range]{accent-color:var(--accent);flex:1 1 200px;min-width:0}
+.clock{font:500 .9rem var(--mono);font-variant-numeric:tabular-nums;color:var(--muted);min-width:7ch}
+.legend{display:flex;flex-wrap:wrap;gap:6px 18px;font-size:.84rem;color:var(--muted)}
+.legend i{display:inline-block;width:18px;height:3px;border-radius:2px;vertical-align:middle;margin-right:6px}
+
+.speed-row{display:flex;flex-wrap:wrap;gap:12px;align-items:center;padding:14px;background:var(--panel);border:1px solid var(--rule);border-radius:8px}
+.speed-row label{font:500 .72rem var(--mono);letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
+.speed-row output{font:500 1.3rem var(--mono);font-variant-numeric:tabular-nums;min-width:9ch}
+.presets{display:flex;flex-wrap:wrap;gap:8px}
+.verdict{padding:14px;border-radius:8px;background:var(--panel);border:1px solid var(--rule);display:flex;flex-direction:column;gap:6px}
+.verdict .tag{align-self:flex-start;font:500 .7rem/1 var(--mono);letter-spacing:.1em;text-transform:uppercase;padding:5px 8px;border-radius:4px;color:#fff;background:var(--muted)}
+.verdict h3{font-size:1.5rem}
+.verdict p{font-size:.92rem;color:var(--muted)}
+.cmp{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:10px}
+.cmp li{display:grid;grid-template-columns:14px minmax(0,1fr);gap:10px;font-size:.88rem}
+.cmp li i{width:14px;height:14px;border-radius:50%;margin-top:3px}
+.cmp li b{display:block}
+.cmp li span{color:var(--muted)}
+
+.second{display:grid;grid-template-columns:minmax(0,1.3fr) minmax(0,1fr);gap:24px;align-items:center;padding:20px;background:var(--panel);border:1px solid var(--rule);border-radius:10px}
+@media (max-width:760px){.second{grid-template-columns:minmax(0,1fr)}}
+.second svg{width:100%;height:auto;display:block}
+.second .txt{display:flex;flex-direction:column;gap:10px}
+.second .txt p{font-size:.95rem}
+.svg-ink{fill:var(--ink)} .svg-muted{fill:var(--muted)}
+
+.steps{display:flex;flex-wrap:wrap;gap:8px}
+.csf-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
+@media (max-width:760px){.csf-grid{grid-template-columns:minmax(0,1fr)}}
+.panel-title{font:500 .72rem/1 var(--mono);letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-bottom:8px}
+.caption{padding:16px;background:var(--panel);border:1px solid var(--rule);border-radius:8px;display:flex;flex-direction:column;gap:8px}
+.caption p{font-size:.95rem;max-width:72ch}
+.findings{list-style:none;margin:0;padding:0;display:flex;flex-wrap:wrap;gap:8px}
+.findings li{font-size:.82rem;padding:5px 10px;border-radius:999px;background:var(--chip-bg);color:var(--muted);transition:background .4s,color .4s}
+.findings li.on{background:var(--csf);color:#fff}
+.byline{font:500 .95rem/1.3 var(--body);color:var(--muted)}
+.foot{border-top:2px solid var(--ink);padding-top:14px;display:flex;flex-direction:column;gap:4px;font-size:.86rem;color:var(--muted)}
+.foot b{color:var(--ink);font-weight:600}
+.note{font-size:.84rem;color:var(--muted);max-width:80ch;border-top:1px solid var(--rule);padding-top:14px}
+@media (prefers-reduced-motion: reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+
+<main class="wrap">
+  <header class="mast">
+    <p class="eyebrow">Orbital mechanics · CSF physiology</p>
+    <h1>Falling Around the Earth</h1>
+    <p class="byline">By Dr Ganesalingam Narenthiran</p>
+    <p class="lede">Astronauts on the International Space Station float, yet gravity at their height is still almost as strong as on the ground. This is apparent weightlessness: the station and everyone in it are falling together. Three working models show how a rocket turns its climb into sideways speed, why that speed keeps the station from hitting the ground, and what constant free fall does to the fluid around the brain.</p>
+    <ul class="facts">
+      <li><b>400 km</b><span>average ISS altitude</span></li>
+      <li><b>89%</b><span>of surface gravity at that height</span></li>
+      <li><b>7.7 km/s</b><span>sideways speed, about 28,000 km/h</span></li>
+      <li><b>4–5 m</b><span>fallen toward Earth every second</span></li>
+    </ul>
+  </header>
+
+  <!-- 1 -->
+  <section class="chapter" id="launch">
+    <div class="chap-head"><span class="num">1</span><div>
+      <h2>From launch pad to orbit</h2>
+      <p>The rocket flies straight up, then gradually tilts over. Watch the speed arrow: at lift-off it points up; by engine cut-off almost all of it points sideways, parallel to the ground, at about 7.7 km/s. That sideways speed is what the module carries into orbit.</p>
+    </div></div>
+    <div class="stage">
+      <div class="screen"><canvas id="cv1" class="c-wide" role="img" aria-label="Animation of a rocket climbing vertically, tilting over, and entering orbit around the Earth"></canvas></div>
+      <aside class="side">
+        <dl class="ro">
+          <div><dt>Mission time</dt><dd id="r1t">T+ 00:00</dd></div>
+          <div><dt>Altitude</dt><dd id="r1alt">0<small>km</small></dd></div>
+          <div><dt>Speed</dt><dd id="r1v">0.00<small>km/s</small></dd></div>
+          <div><dt>Speed</dt><dd id="r1kmh">0<small>km/h</small></dd></div>
+          <div><dt>Sideways part</dt><dd id="r1vh">0.00<small>km/s</small></dd></div>
+          <div><dt>Upward part</dt><dd id="r1vv">0.00<small>km/s</small></dd></div>
+          <div><dt>Tilt from vertical</dt><dd id="r1tilt">0°</dd></div>
+          <div><dt>Gravity here</dt><dd id="r1g">100<small>% of ground</small></dd></div>
+          <div class="wide"><dt>Weight felt by crew</dt><dd id="r1felt">1.0 g</dd></div>
+        </dl>
+        <ol class="phases" id="ph1"></ol>
+      </aside>
+    </div>
+    <div class="controls">
+      <button id="play1" class="primary">Pause</button>
+      <button id="restart1">Restart</button>
+      <input type="range" id="scrub1" min="0" max="6200" step="1" value="0" aria-label="Mission time">
+      <span class="clock" id="clock1">T+ 00:00</span>
+    </div>
+    <div class="legend">
+      <span><i style="background:#ffffff"></i>Velocity (speed and direction)</span>
+      <span><i style="background:#ff9a52"></i>Sideways part</span>
+      <span><i style="background:#62c9f0"></i>Upward part</span>
+      <span><i style="background:#ff5d6c"></i>Pull of gravity</span>
+    </div>
+  </section>
+
+  <!-- 2 -->
+  <section class="chapter" id="orbit">
+    <div class="chap-head"><span class="num">2</span><div>
+      <h2>Why sideways speed keeps it up</h2>
+      <p>The module starts 400 km up, moving parallel to the ground. Gravity pulls it toward the centre of the Earth the whole time; only its sideways speed changes. Too slow and it falls into the Earth. At 7.67 km/s it falls around the Earth in a circle. Faster and it swings out into a higher, stretched orbit. Fast enough and it escapes. The Earth and the 400 km height are drawn to scale.</p>
+    </div></div>
+    <div class="speed-row">
+      <label for="v2">Sideways speed</label>
+      <input type="range" id="v2" min="5" max="12" step="0.01" value="7.67">
+      <output id="v2o" for="v2">7.67 km/s</output>
+      <div class="presets">
+        <button data-v="6.5">Too slow · 6.5</button>
+        <button data-v="7.67">Orbital · 7.67</button>
+        <button data-v="9">Faster · 9.0</button>
+        <button data-v="11.2">Escape · 11.2</button>
+        <button id="cmp2" aria-pressed="false">Compare all four</button>
+      </div>
+    </div>
+    <div class="stage">
+      <div class="screen"><canvas id="cv2" class="c-orbit" role="img" aria-label="Simulation of a module launched sideways from 400 km at the chosen speed"></canvas></div>
+      <aside class="side">
+        <div class="verdict" id="verdict2">
+          <span class="tag" id="tag2">Outcome</span>
+          <h3 id="vt2">Circular orbit</h3>
+          <p id="vx2"></p>
+        </div>
+        <dl class="ro" id="ro2">
+          <div><dt>Of orbital speed</dt><dd id="r2pct">100<small>%</small></dd></div>
+          <div><dt>Altitude now</dt><dd id="r2alt">400<small>km</small></dd></div>
+          <div><dt>Lowest point</dt><dd id="r2peri">400<small>km</small></dd></div>
+          <div><dt>Highest point</dt><dd id="r2apo">400<small>km</small></dd></div>
+          <div class="wide"><dt>Time for one orbit</dt><dd id="r2per">92<small>min</small></dd></div>
+        </dl>
+        <ul class="cmp" id="cmpList2" hidden></ul>
+      </aside>
+    </div>
+
+    <div class="second">
+      <svg viewBox="0 0 640 290" role="img" aria-label="Diagram of one second of orbital motion: the station moves 7.7 km sideways and falls 4.3 metres, while the Earth's surface curves away by the same 4.3 metres">
+        <defs>
+          <marker id="ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" style="fill:var(--ink)"/></marker>
+          <marker id="ahA" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" style="fill:var(--accent)"/></marker>
+          <marker id="ahC" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" style="fill:var(--csf)"/></marker>
+        </defs>
+        <path d="M0 200 L60 180 Q320 180 580 240 L640 262 L640 290 L0 290Z" style="fill:var(--csf);opacity:.18"/>
+        <path d="M0 200 L60 180 Q320 180 580 240 L640 262" style="fill:none;stroke:var(--csf);stroke-width:2.5"/>
+        <line x1="60" y1="60" x2="580" y2="60" style="stroke:var(--muted);stroke-width:1.5" stroke-dasharray="6 5"/>
+        <line x1="60" y1="180" x2="580" y2="180" style="stroke:var(--muted);stroke-width:1.2" stroke-dasharray="3 5"/>
+        <path d="M60 60 Q320 60 580 120" style="fill:none;stroke:var(--accent);stroke-width:3"/>
+        <line x1="580" y1="64" x2="580" y2="116" style="stroke:var(--accent);stroke-width:2" marker-end="url(#ahA)"/>
+        <line x1="580" y1="184" x2="580" y2="236" style="stroke:var(--csf);stroke-width:2" marker-end="url(#ahC)"/>
+        <line x1="60" y1="66" x2="60" y2="176" style="stroke:var(--ink);stroke-width:1" marker-start="url(#ah)" marker-end="url(#ah)"/>
+        <line x1="604" y1="124" x2="604" y2="236" style="stroke:var(--ink);stroke-width:1" marker-start="url(#ah)" marker-end="url(#ah)"/>
+        <circle cx="60" cy="60" r="7" style="fill:var(--ink)"/>
+        <circle cx="580" cy="120" r="7" style="fill:var(--accent)"/>
+        <g style="font:500 13px var(--mono)">
+          <text x="72" y="48" class="svg-ink">Now</text>
+          <text x="300" y="48" class="svg-muted" text-anchor="middle">7.7 km sideways if there were no gravity</text>
+          <text x="570" y="96" class="svg-ink" text-anchor="end" style="fill:var(--accent)">falls ≈ 4.3 m</text>
+          <text x="570" y="214" text-anchor="end" style="fill:var(--csf)">surface curves away ≈ 4.3 m</text>
+          <text x="70" y="124" class="svg-muted">400 km</text>
+          <text x="596" y="182" class="svg-muted" text-anchor="end">400 km</text>
+          <text x="560" y="140" class="svg-ink" text-anchor="end">1 second later</text>
+          <text x="20" y="278" class="svg-muted">Not to scale: the 4.3 m drops are hugely exaggerated</text>
+        </g>
+      </svg>
+      <div class="txt">
+        <h3>One second of orbit</h3>
+        <p>At 400 km, gravity is 8.7 m/s², about 89% of its pull at the ground. In one second the station falls about 4.3 m toward the Earth.</p>
+        <p>In that same second it travels 7.7 km sideways. Over 7.7 km the curved surface of the Earth drops away by the same 4.3 m. So the station keeps falling but never gets closer to the ground.</p>
+        <p>Think of throwing a ball. The harder you throw it, the further away it lands. Throw it hard enough and the ground curves away before the ball can reach it.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- 3 -->
+  <section class="chapter" id="csf">
+    <div class="chap-head"><span class="num">3</span><div>
+      <h2>What happens to CSF in the head</h2>
+      <p>On Earth, gravity pulls cerebrospinal fluid (CSF) and blood toward the feet when we stand, like water in a tall bottle that presses hardest at the bottom. In free fall that top-to-bottom difference disappears in every posture. Step through from standing on Earth to months in orbit.</p>
+    </div></div>
+    <div class="controls">
+      <div class="steps" id="steps3"></div>
+      <button id="play3" class="primary">Play sequence</button>
+    </div>
+    <div class="csf-grid">
+      <div><div class="panel-title">Whole body: posture, felt weight, fluid</div><div class="screen"><canvas id="cvBody" class="c-43" role="img" aria-label="Figure showing posture and fluid distribution for the selected stage"></canvas></div></div>
+      <div><div class="panel-title">Head and eye, magnified</div><div class="screen"><canvas id="cvHead" class="c-43" role="img" aria-label="Head cross-section with ventricles and a magnified eye showing the optic nerve sheath and back of the globe"></canvas></div></div>
+      <div><div class="panel-title">CSF pressure along the neuraxis</div><div class="screen"><canvas id="cvAxis" class="c-chart" role="img" aria-label="Chart of CSF pressure from head to lumbosacral spine"></canvas></div></div>
+      <div><div class="panel-title">Pressure in the head over 24 hours</div><div class="screen"><canvas id="cvDay" class="c-chart" role="img" aria-label="Chart comparing intracranial pressure over a day on Earth and in orbit"></canvas></div></div>
+    </div>
+    <div class="stage">
+      <div class="caption">
+        <h3 id="cap3t">Standing on Earth</h3>
+        <p id="cap3x"></p>
+        <ul class="findings" id="find3">
+          <li data-k="vent">Ventricles enlarge</li>
+          <li data-k="sheath">Optic nerve sheath distends</li>
+          <li data-k="flat">Back of globe flattens</li>
+          <li data-k="disc">Optic disc swells</li>
+          <li data-k="folds">Choroidal folds</li>
+          <li data-k="hyper">Hyperopic shift</li>
+        </ul>
+      </div>
+      <dl class="ro">
+        <div><dt>Pressure in head</dt><dd id="r3h">4<small>cmH₂O</small></dd></div>
+        <div><dt>Lumbosacral</dt><dd id="r3l">45<small>cmH₂O</small></dd></div>
+        <div><dt>Top-to-bottom</dt><dd id="r3d">41<small>cmH₂O</small></dd></div>
+        <div><dt>Headward shift</dt><dd id="r3s">0<small>%</small></dd></div>
+        <div class="wide"><dt>Weight felt</dt><dd id="r3f">1 g, head → feet</dd></div>
+      </dl>
+    </div>
+    <p class="note">Pressures are illustrative, chosen to match the description: lying flat ≈ 14–18 cmH₂O, near-uniform along the neuraxis in orbit, low in the head and high at the lumbosacral spine when upright. Eye and ventricle changes are exaggerated so they can be seen. The leading theory is that spaceflight-associated neuro-ocular syndrome (SANS) comes mainly from this headward fluid shift; the exact mechanism is still debated. Weightlessness, cosmic radiation and mildly raised CO₂ on the station also cause other neurological and systemic problems.</p>
+  </section>
+
+  <footer class="foot">
+    <p>Created by <b>Dr Ganesalingam Narenthiran</b>. Text, models and animations © 2026 Dr Ganesalingam Narenthiran. All rights reserved.</p>
+    <p>No part of this page may be reproduced or redistributed without the author's permission.</p>
+  </footer>
+</main>
+
+<script>
+(() => {
+"use strict";
+const R = 6371, MU = 398600.4418, G0 = 9.80665, H_ORB = 400;
+const R0 = R + H_ORB, VC = Math.sqrt(MU / R0), VESC = Math.SQRT2 * VC;
+const clamp = (x, a, b) => Math.max(a, Math.min(b, x));
+const lerp = (a, b, t) => a + (b - a) * t;
+const smooth = (e0, e1, x) => { const t = clamp((x - e0) / (e1 - e0), 0, 1); return t * t * (3 - 2 * t); };
+const fmt = (x, d = 0) => x.toLocaleString("en-GB", { minimumFractionDigits: d, maximumFractionDigits: d });
+const MONO = '"IBM Plex Mono", ui-monospace, Menlo, monospace';
+const reduce = matchMedia("(prefers-reduced-motion: reduce)").matches;
+const $ = id => document.getElementById(id);
+const setHTML = (el, html) => { if (el._v !== html) { el.innerHTML = html; el._v = html; } };
+
+function fit(cv) {
+  const r = cv.getBoundingClientRect();
+  const d = Math.min(2, window.devicePixelRatio || 1);
+  const w = Math.max(1, Math.round(r.width * d)), h = Math.max(1, Math.round(r.height * d));
+  if (cv.width !== w || cv.height !== h) { cv.width = w; cv.height = h; }
+  const ctx = cv.getContext("2d");
+  ctx.setTransform(d, 0, 0, d, 0, 0);
+  return { ctx, W: r.width, H: r.height };
+}
+function arrow(ctx, x0, y0, x1, y1, col, w = 2, dash = null) {
+  const dx = x1 - x0, dy = y1 - y0, L = Math.hypot(dx, dy);
+  if (L < 3) return;
+  const ux = dx / L, uy = dy / L, hs = Math.min(9, L * 0.45) + w;
+  ctx.save();
+  ctx.strokeStyle = col; ctx.fillStyle = col; ctx.lineWidth = w; ctx.lineCap = "round";
+  if (dash) ctx.setLineDash(dash);
+  ctx.beginPath(); ctx.moveTo(x0, y0); ctx.lineTo(x1 - ux * hs * 0.7, y1 - uy * hs * 0.7); ctx.stroke();
+  ctx.setLineDash([]);
+  ctx.beginPath(); ctx.moveTo(x1, y1);
+  ctx.lineTo(x1 - ux * hs - uy * hs * 0.5, y1 - uy * hs + ux * hs * 0.5);
+  ctx.lineTo(x1 - ux * hs + uy * hs * 0.5, y1 - uy * hs - ux * hs * 0.5);
+  ctx.closePath(); ctx.fill(); ctx.restore();
+}
+function text(ctx, s, x, y, col, align = "left", size = 12, weight = 500) {
+  ctx.font = `${weight} ${size}px ${MONO}`; ctx.fillStyle = col; ctx.textAlign = align; ctx.textBaseline = "middle";
+  ctx.fillText(s, x, y);
+}
+const STARS = Array.from({ length: 170 }, () => ({ x: Math.random(), y: Math.random(), r: Math.random() * 1.3 + 0.3, a: Math.random() * 0.6 + 0.25 }));
+function stars(ctx, W, H, alpha) {
+  if (alpha <= 0.01) return;
+  ctx.fillStyle = "#ffffff";
+  for (const s of STARS) { ctx.globalAlpha = s.a * alpha; ctx.fillRect(s.x * W, s.y * H, s.r, s.r); }
+  ctx.globalAlpha = 1;
+}
+function mixRGB(a, b, t) { return `rgb(${Math.round(lerp(a[0], b[0], t))},${Math.round(lerp(a[1], b[1], t))},${Math.round(lerp(a[2], b[2], t))})`; }
+const mmss = s => { s = Math.max(0, Math.floor(s)); const h = Math.floor(s / 3600), m = Math.floor(s / 60) % 60, x = s % 60;
+  return (h ? h + ":" + String(m).padStart(2, "0") : String(m).padStart(2, "0")) + ":" + String(x).padStart(2, "0"); };
+
+const visible = new Map();
+const io = new IntersectionObserver(es => es.forEach(e => visible.set(e.target, e.isIntersecting)), { rootMargin: "100px" });
+
+/* =========================================================
+   1. LAUNCH TO ORBIT (scripted gravity turn, kinematic model)
+   ========================================================= */
+const TB = 520, TV = 12, TSEP = 155, DT = 0.25;
+const PERIOD = 2 * Math.PI * Math.sqrt(R0 ** 3 / MU);
+const TEND = TB + PERIOD + 40;
+const gammaAt = t => t < TV ? Math.PI / 2 : Math.PI / 2 * Math.pow(1 - (t - TV) / (TB - TV), 2.2);
+const vAt = t => VC * Math.pow(clamp(t / TB, 0, 1), 1.4);
+const NB = Math.round(TB / DT);
+let hr = 0;
+for (let i = 0; i < NB; i++) { const t = (i + 0.5) * DT; hr += vAt(t) * Math.sin(gammaAt(t)) * DT; }
+const K = H_ORB / hr; // stretch the climb so cut-off happens exactly at 400 km
+const LT = [];
+{
+  let h = 0, th = 0;
+  for (let i = 0; i <= NB; i++) {
+    const t = i * DT, v = vAt(t), g = gammaAt(t);
+    LT.push({ t, h, th, vh: v * Math.cos(g), vv: K * v * Math.sin(g) });
+    if (i < NB) {
+      const tm = t + DT / 2, vm = vAt(tm), gm = gammaAt(tm);
+      const dh = K * vm * Math.sin(gm) * DT;
+      th += vm * Math.cos(gm) / (R + h + dh / 2) * DT; h += dh;
+    }
+  }
+  LT[NB].h = H_ORB; LT[NB].vv = 0; LT[NB].vh = VC;
+}
+const TH_T = LT[NB].th;
+function state1(t) {
+  if (t <= TB) {
+    const f = t / DT, i = Math.min(NB - 1, Math.floor(f)), w = f - i, a = LT[i], b = LT[i + 1];
+    return { h: lerp(a.h, b.h, w), th: lerp(a.th, b.th, w), vh: lerp(a.vh, b.vh, w), vv: lerp(a.vv, b.vv, w) };
+  }
+  return { h: H_ORB, th: TH_T + VC / R0 * (t - TB), vh: VC, vv: 0 };
+}
+function felt1(t, s) {
+  if (t >= TB) return 0;
+  if (t > TSEP && t < TSEP + 3) return 0.05;
+  const dvdt = VC * 1.4 * Math.pow(Math.max(t, 0.5) / TB, 0.4) / TB * 1000;
+  const gl = G0 * (R / (R + s.h)) ** 2;
+  return (dvdt + gl * Math.sin(gammaAt(t))) / G0;
+}
+// spent first stage: ballistic arc from separation
+const BOOST = [];
+{
+  const s = state1(TSEP), p = Math.PI / 2 - s.th;
+  let x = (R + s.h) * Math.cos(p), y = (R + s.h) * Math.sin(p);
+  let vx = s.vv * Math.cos(p) + s.vh * Math.sin(p), vy = s.vv * Math.sin(p) - s.vh * Math.cos(p);
+  for (let t = 0; t < 1500; t += 1) {
+    BOOST.push([x, y]);
+    const r = Math.hypot(x, y); if (r < R) break;
+    const f = -MU / (r * r * r);
+    vx += f * x; vy += f * y; x += vx; y += vy;
+  }
+}
+const P1 = [
+  { t0: 0, title: "Lift-off: straight up", text: "The rocket climbs vertically to clear the pad and the thickest air. All of its speed is upward." },
+  { t0: TV, title: "Tilting over (gravity turn)", text: "A small tilt lets gravity bend the path. The nose leans further downrange and sideways speed begins to build." },
+  { t0: TSEP, title: "First stage drops away", text: "The spent first stage falls back to Earth. It is far too slow sideways to stay up." },
+  { t0: TSEP + 12, title: "Upper stage builds sideways speed", text: "Above the atmosphere the engine thrusts almost horizontally. The climb levels off while sideways speed races toward 7.7 km/s." },
+  { t0: TB, title: "Engine cut-off: into orbit", text: "At 400 km the module is moving parallel to the surface at 7.67 km/s. The engine stops and the crew feel weightless, though gravity is still 89% of ground level." },
+  { t0: TB + 40, title: "Falling around the Earth", text: "No more thrust. Gravity bends the path into a circle; one lap takes about 92 minutes." }
+];
+const cv1 = $("cv1"), ph1 = $("ph1"), scrub1 = $("scrub1"), play1 = $("play1");
+scrub1.max = Math.ceil(TEND);
+P1.forEach((p, i) => {
+  const li = document.createElement("li");
+  li.tabIndex = 0; li.innerHTML = `<b>${p.title}</b><span>${p.text}</span>`;
+  const go = () => { S1.t = p.t0 + 0.01; S1.dirty = true; };
+  li.addEventListener("click", go);
+  li.addEventListener("keydown", e => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); go(); } });
+  ph1.appendChild(li);
+});
+const S1 = { t: reduce ? TB + 5 : 0, playing: !reduce, dirty: true };
+const setPlay1 = () => { play1.textContent = S1.playing ? "Pause" : (S1.t >= TEND ? "Replay" : "Play"); };
+play1.addEventListener("click", () => { if (S1.t >= TEND) S1.t = 0; S1.playing = !S1.playing; setPlay1(); });
+$("restart1").addEventListener("click", () => { S1.t = 0; S1.playing = true; setPlay1(); S1.dirty = true; });
+scrub1.addEventListener("input", () => { S1.t = +scrub1.value; S1.dirty = true; });
+setPlay1();
+io.observe(cv1);
+
+const wpos = (h, th, ex) => { const r = R + h * ex, p = Math.PI / 2 - th; return [r * Math.cos(p), r * Math.sin(p)]; };
+
+function drawRocket(ctx, x, y, ang, kind, flame) {
+  ctx.save(); ctx.translate(x, y); ctx.rotate(ang);
+  if (flame) {
+    const f = 1 + Math.random() * 0.35, len = (kind === "full" ? 16 : 10) * f;
+    const back = kind === "full" ? -11 : -6;
+    const g = ctx.createLinearGradient(back, 0, back - len, 0);
+    g.addColorStop(0, "rgba(255,240,190,1)"); g.addColorStop(0.4, "rgba(255,150,60,.9)"); g.addColorStop(1, "rgba(255,80,30,0)");
+    ctx.fillStyle = g; ctx.beginPath(); ctx.moveTo(back, -3); ctx.lineTo(back - len, 0); ctx.lineTo(back, 3); ctx.closePath(); ctx.fill();
+  }
+  if (kind === "module") {
+    ctx.fillStyle = "#c9d6e2"; ctx.fillRect(-6, -2.5, 12, 5);
+    ctx.fillStyle = "#3b7fb8"; ctx.fillRect(-3, -11, 3, 8); ctx.fillRect(-3, 3, 3, 8);
+    ctx.fillRect(2, -11, 3, 8); ctx.fillRect(2, 3, 3, 8);
+  } else {
+    const L = kind === "full" ? 22 : 12, x0 = -L / 2;
+    ctx.fillStyle = "#eef3f7";
+    ctx.beginPath(); ctx.moveTo(x0, -2.6); ctx.lineTo(L / 2 - 4, -2.6); ctx.lineTo(L / 2 + 1, 0); ctx.lineTo(L / 2 - 4, 2.6); ctx.lineTo(x0, 2.6); ctx.closePath(); ctx.fill();
+    if (kind === "full") { ctx.fillStyle = "#1c2733"; ctx.fillRect(x0 + 9, -2.6, 1.2, 5.2); }
+  }
+  ctx.restore();
+}
+
+function draw1() {
+  const { ctx, W, H } = fit(cv1);
+  if (W < 60 || H < 60) return;
+  const t = S1.t, s = state1(t);
+  const arc = s.th * R;
+  const Hadapt = Math.max(14, 0.72 * Math.hypot(s.h, arc) + 8);
+  const Hmax = (R + H_ORB * 4) * 1.12;
+  const b = smooth(TB - 60, TB + 240, t);
+  const Hh = Math.exp(lerp(Math.log(Hadapt), Math.log(Hmax), b));
+  const ex = 1 + 3 * smooth(Math.log(350), Math.log(5000), Math.log(Hh));
+  const pad = wpos(0, 0, ex), rk = wpos(s.h, s.th, ex);
+  const mx = (pad[0] + rk[0]) / 2, my = (pad[1] + rk[1]) / 2, mr = Math.hypot(mx, my);
+  const cx = lerp(mx + mx / mr * 0.3 * Hh, 0, b), cy = lerp(my + my / mr * 0.3 * Hh, 0, b);
+  const sc = Math.min(W, H) / 2 / Hh;
+  const X = x => W / 2 + (x - cx) * sc, Y = y => H / 2 - (y - cy) * sc;
+
+  const skyDark = Math.max(smooth(2, 70, s.h), b);
+  ctx.fillStyle = mixRGB([58, 102, 148], [5, 10, 17], skyDark); ctx.fillRect(0, 0, W, H);
+  stars(ctx, W, H, Math.max(smooth(30, 100, s.h), b));
+
+  const ca = Math.atan2(cy, cx);
+  const span = Math.min(Math.PI, Hh * 2.4 * Math.max(1, W / H) / R + 0.01);
+  const ring = (r, a0 = ca - span, a1 = ca + span, n = 220) => {
+    const pts = []; for (let i = 0; i <= n; i++) { const a = a0 + (a1 - a0) * i / n; pts.push([X(r * Math.cos(a)), Y(r * Math.sin(a))]); } return pts;
+  };
+  const poly = (pts, move = true) => pts.forEach((p, i) => (i === 0 && move) ? ctx.moveTo(p[0], p[1]) : ctx.lineTo(p[0], p[1]));
+  // atmosphere
+  const atm = 100 * ex;
+  ctx.beginPath(); poly(ring(R + atm)); poly(ring(R).reverse(), false); ctx.closePath();
+  ctx.fillStyle = `rgba(110,170,235,${0.16 + 0.1 * (1 - skyDark)})`; ctx.fill();
+  // earth
+  const eg = ctx.createRadialGradient(X(0), Y(0), 0, X(0), Y(0), R * sc);
+  eg.addColorStop(0, "#0a1f33"); eg.addColorStop(0.92, "#16486a"); eg.addColorStop(1, "#2b7ba3");
+  ctx.beginPath(); poly(ring(R)); if (span < Math.PI) ctx.lineTo(X(0), Y(0)); ctx.closePath();
+  ctx.fillStyle = eg; ctx.fill();
+  // a stretch of land around the launch site
+  ctx.beginPath(); poly(ring(R, Math.PI / 2 - 0.035, Math.PI / 2 + 0.09, 80)); poly(ring(R * 0.985, Math.PI / 2 - 0.035, Math.PI / 2 + 0.09, 80).reverse(), false); ctx.closePath();
+  ctx.fillStyle = "#3e6a45"; ctx.fill();
+
+  // reference shells
+  const shell = (alt, label, col) => {
+    const r = R + alt * ex;
+    ctx.save(); ctx.strokeStyle = col; ctx.lineWidth = 1; ctx.setLineDash([5, 6]);
+    ctx.beginPath(); poly(ring(r)); ctx.stroke(); ctx.restore();
+    let lx = 14, c = (cx + (lx - W / 2) / sc) / r, a;
+    if (Math.abs(c) <= 1) a = Math.acos(c); else a = Math.PI / 2 + 0.32;
+    const px = X(r * Math.cos(a)), py = Y(r * Math.sin(a));
+    if (py > 14 && py < H - 14 && px > -5 && px < W) text(ctx, label, Math.max(px, 12), py - 9, col, "left", 11);
+  };
+  shell(100, "100 km · edge of space", "rgba(150,200,240,.65)");
+  shell(H_ORB, "400 km · ISS orbit", "rgba(255,190,120,.75)");
+
+  // planned path (ghost) and flown path
+  ctx.save(); ctx.strokeStyle = "rgba(255,255,255,.22)"; ctx.lineWidth = 1.5; ctx.setLineDash([2, 5]);
+  ctx.beginPath();
+  for (let i = 0; i <= NB; i += 4) { const p = wpos(LT[i].h, LT[i].th, ex); i === 0 ? ctx.moveTo(X(p[0]), Y(p[1])) : ctx.lineTo(X(p[0]), Y(p[1])); }
+  ctx.stroke(); ctx.restore();
+  ctx.save(); ctx.strokeStyle = "#ff9a52"; ctx.lineWidth = 2.5; ctx.lineJoin = "round"; ctx.beginPath();
+  const iEnd = Math.min(NB, Math.floor(Math.min(t, TB) / DT));
+  for (let i = 0; i <= iEnd; i += 2) { const p = wpos(LT[i].h, LT[i].th, ex); i === 0 ? ctx.moveTo(X(p[0]), Y(p[1])) : ctx.lineTo(X(p[0]), Y(p[1])); }
+  if (t > TB) { const n = 160; for (let k = 0; k <= n; k++) { const th = lerp(TH_T, s.th, k / n); const p = wpos(H_ORB, th, ex); ctx.lineTo(X(p[0]), Y(p[1])); } }
+  else ctx.lineTo(X(rk[0]), Y(rk[1]));
+  ctx.stroke(); ctx.restore();
+
+  // launch pad
+  ctx.fillStyle = "#e8eef3"; ctx.fillRect(X(pad[0]) - 1, Y(pad[1]) - 6, 2, 6);
+
+  // spent first stage
+  if (t > TSEP) {
+    const k = Math.floor(t - TSEP);
+    if (k < BOOST.length - 1) {
+      const [bx, by] = BOOST[k], r = Math.hypot(bx, by), p = Math.atan2(by, bx);
+      const rr = R + (r - R) * ex, sx = X(rr * Math.cos(p)), sy = Y(rr * Math.sin(p));
+      ctx.globalAlpha = 0.75 * (1 - smooth(BOOST.length - 60, BOOST.length, k));
+      drawRocket(ctx, sx, sy, (t - TSEP) * 0.9, "upper", false);
+      if (b < 0.5) text(ctx, "spent stage", sx + 10, sy + 10, "rgba(230,236,242,.8)", "left", 10);
+      ctx.globalAlpha = 1;
+    }
+  }
+
+  // vehicle and vectors
+  const p = Math.PI / 2 - s.th, up = [Math.cos(p), Math.sin(p)], east = [Math.sin(p), -Math.cos(p)];
+  const vw = [s.vv * up[0] + s.vh * east[0], s.vv * up[1] + s.vh * east[1]];
+  const sp = Math.hypot(s.vh, s.vv);
+  const rx = X(rk[0]), ry = Y(rk[1]);
+  const ang = sp < 0.02 ? Math.atan2(-up[1], up[0]) : Math.atan2(-vw[1], vw[0]);
+  const kind = t >= TB ? "module" : (t < TSEP ? "full" : "upper");
+  const kpx = Math.min(W, H) / 40;
+  if (sp > 0.12) {
+    if (s.vv * kpx > 4) arrow(ctx, rx, ry, rx + up[0] * s.vv * kpx, ry - up[1] * s.vv * kpx, "#62c9f0", 2, [4, 4]);
+    if (s.vh * kpx > 4) arrow(ctx, rx, ry, rx + east[0] * s.vh * kpx, ry - east[1] * s.vh * kpx, "#ff9a52", 2, [4, 4]);
+    arrow(ctx, rx, ry, rx + vw[0] * kpx, ry - vw[1] * kpx, "#ffffff", 2.5);
+    if (sp * kpx > 26) text(ctx, `${fmt(sp, 2)} km/s`, rx + vw[0] * kpx + 8, ry - vw[1] * kpx - 8, "#ffffff", "left", 11);
+  }
+  const gl = (R / (R + s.h)) ** 2;
+  arrow(ctx, rx, ry, rx - up[0] * 30 * gl, ry + up[1] * 30 * gl, "#ff5d6c", 2.5);
+  drawRocket(ctx, rx, ry, ang, kind, t < TB && !(t > TSEP && t < TSEP + 3));
+
+  // overlay
+  text(ctx, `T+ ${mmss(t)}`, 14, 18, "#e8eef3", "left", 13);
+  text(ctx, `${fmt(s.h)} km up · ${fmt(arc)} km downrange`, 14, 36, "rgba(232,238,243,.7)", "left", 11);
+  if (ex > 1.15) text(ctx, `Heights exaggerated ×${fmt(ex, 1)} so the orbit is visible`, 14, H - 14, "rgba(232,238,243,.6)", "left", 10);
+  else text(ctx, "To scale", 14, H - 14, "rgba(232,238,243,.6)", "left", 10);
+
+  // readouts
+  setHTML($("r1t"), `T+ ${mmss(t)}`);
+  setHTML($("r1alt"), `${fmt(s.h)}<small>km</small>`);
+  setHTML($("r1v"), `${fmt(sp, 2)}<small>km/s</small>`);
+  setHTML($("r1kmh"), `${fmt(Math.round(sp * 3600 / 100) * 100)}<small>km/h</small>`);
+  setHTML($("r1vh"), `${fmt(s.vh, 2)}<small>km/s</small>`);
+  setHTML($("r1vv"), `${fmt(Math.max(0, s.vv), 2)}<small>km/s</small>`);
+  setHTML($("r1tilt"), `${fmt(sp < 0.02 ? 0 : 90 - Math.atan2(s.vv, s.vh) * 180 / Math.PI)}°`);
+  setHTML($("r1g"), `${fmt(gl * 100)}<small>% of ground</small>`);
+  const fe = felt1(t, s);
+  setHTML($("r1felt"), fe < 0.1 ? `0 g <small>weightless: falling with the craft</small>` : `${fmt(fe, 1)} g`);
+  let cur = 0; P1.forEach((q, i) => { if (t >= q.t0) cur = i; });
+  [...ph1.children].forEach((li, i) => li.classList.toggle("on", i === cur));
+  $("clock1").textContent = `T+ ${mmss(t)}`;
+  if (document.activeElement !== scrub1) scrub1.value = Math.round(t);
+}
+function tick1(dt) {
+  if (S1.playing) {
+    const rate = lerp(22, 280, smooth(TB, TB + 300, S1.t));
+    S1.t += dt * rate;
+    if (S1.t >= TEND) { S1.t = TEND; S1.playing = false; setPlay1(); }
+    S1.dirty = true;
+  }
+  if (S1.dirty && visible.get(cv1) !== false) { draw1(); S1.dirty = false; }
+}
+
+/* =========================================================
+   2. ORBIT VS SIDEWAYS SPEED (real two-body physics, to scale)
+   ========================================================= */
+const cv2 = $("cv2"), v2 = $("v2"), cmp2 = $("cmp2");
+io.observe(cv2);
+const PRESETS = [
+  { v: 6.5, label: "Too slow · 6.5 km/s", col: "#ff7f6e" },
+  { v: 7.67, label: "Orbital · 7.67 km/s", col: "#5fd6c2" },
+  { v: 9.0, label: "Faster · 9.0 km/s", col: "#f4c35a" },
+  { v: 11.2, label: "Escape · 11.2 km/s", col: "#b6a2ff" }
+];
+const S2 = { mode: "single", sims: [], hold: 0, elapsed: 0, geo: null };
+function orbitInfo(v) {
+  if (v >= VESC) return { kind: "escape" };
+  const E = v * v / 2 - MU / R0, a = -MU / (2 * E);
+  let rp, ra; if (v < VC) { rp = 2 * a - R0; ra = R0; } else { rp = R0; ra = 2 * a - R0; }
+  return { kind: "bound", a, rp, ra, T: 2 * Math.PI * Math.sqrt(a ** 3 / MU) };
+}
+function outcome(v) {
+  const o = orbitInfo(v);
+  if (o.kind === "escape") return { tag: "Escapes", col: "#8f74e6", title: "Escapes Earth", text: `At ${fmt(VESC, 2)} km/s or more, gravity can never pull it back. It leaves on an open path and does not return.`, o };
+  const pA = o.rp - R, aA = o.ra - R;
+  if (pA < 0) return { tag: "Crashes", col: "#d9483b", title: "Falls into the Earth", text: "Too slow. Each second it falls further than the surface curves away beneath it, so its path meets the ground.", o };
+  if (pA < 150) return { tag: "Decays", col: "#d9853b", title: "Spirals down", text: `Its lowest point is only ${fmt(pA)} km up, inside the thin upper atmosphere. Air drag would take a little speed on every pass and bring it down. (Drag is not drawn.)`, o };
+  if (Math.abs(v - VC) < 0.025) return { tag: "Orbits", col: "#1f9e8a", title: "Circular orbit at 400 km", text: `Sideways speed exactly matches the fall. It stays 400 km up and laps the Earth every ${fmt(o.T / 60)} minutes.`, o };
+  if (v < VC) return { tag: "Orbits", col: "#1f9e8a", title: "Lower, oval orbit", text: `It dips to ${fmt(pA)} km on the far side of the Earth, then swings back up to 400 km.`, o };
+  return { tag: "Orbits higher", col: "#c69212", title: "Higher, stretched orbit", text: `It swings out to ${fmt(aA)} km on the far side before falling back to 400 km. One lap takes ${fmt(o.T / 60)} minutes.`, o };
+}
+function makeSim(v, col) { return { v, col, x: 0, y: R0, vx: v, vy: 0, trail: [[0, R0]], status: "flying", t: 0 }; }
+function reset2() {
+  S2.hold = 0; S2.elapsed = 0;
+  S2.sims = S2.mode === "single" ? [makeSim(+v2.value, "#ff9a52")] : PRESETS.map(p => makeSim(p.v, p.col));
+  updatePanel2();
+}
+function updatePanel2() {
+  const single = S2.mode === "single";
+  $("ro2").hidden = !single; $("verdict2").hidden = !single; $("cmpList2").hidden = single;
+  cmp2.setAttribute("aria-pressed", String(!single));
+  const v = +v2.value;
+  $("v2o").textContent = `${fmt(v, 2)} km/s`;
+  if (single) {
+    const oc = outcome(v);
+    $("tag2").textContent = oc.tag; $("tag2").style.background = oc.col;
+    $("vt2").textContent = oc.title; $("vx2").textContent = oc.text;
+    setHTML($("r2pct"), `${fmt(v / VC * 100)}<small>%</small>`);
+    if (oc.o.kind === "escape") {
+      setHTML($("r2peri"), `400<small>km</small>`); setHTML($("r2apo"), `none`); setHTML($("r2per"), `never returns`);
+    } else {
+      setHTML($("r2peri"), oc.o.rp < R ? `below ground` : `${fmt(oc.o.rp - R)}<small>km</small>`);
+      setHTML($("r2apo"), `${fmt(oc.o.ra - R)}<small>km</small>`);
+      setHTML($("r2per"), oc.o.rp < R ? `crashes first` : `${fmt(oc.o.T / 60)}<small>min</small>`);
+    }
+  } else {
+    $("cmpList2").innerHTML = PRESETS.map(p => { const oc = outcome(p.v); return `<li><i style="background:${p.col}"></i><div><b>${p.label}</b><span>${oc.title}. ${oc.text}</span></div></li>`; }).join("");
+  }
+}
+v2.addEventListener("input", () => { S2.mode = "single"; reset2(); });
+document.querySelectorAll(".presets button[data-v]").forEach(bt => bt.addEventListener("click", () => { v2.value = bt.dataset.v; S2.mode = "single"; reset2(); }));
+cmp2.addEventListener("click", () => { S2.mode = S2.mode === "single" ? "compare" : "single"; reset2(); });
+
+const WARP = 620;
+function accel(x, y) { const r2 = x * x + y * y, r = Math.sqrt(r2), f = -MU / (r2 * r); return [f * x, f * y]; }
+function stepSim(sm, dtReal) {
+  if (sm.status !== "flying") return;
+  const r = Math.hypot(sm.x, sm.y);
+  const tsim = dtReal * WARP * Math.pow(r / R0, 1.5);
+  const n = Math.max(1, Math.ceil(tsim / 2)), h = tsim / n;
+  for (let i = 0; i < n; i++) {
+    let [ax, ay] = accel(sm.x, sm.y);
+    sm.vx += ax * h / 2; sm.vy += ay * h / 2;
+    sm.x += sm.vx * h; sm.y += sm.vy * h;
+    [ax, ay] = accel(sm.x, sm.y);
+    sm.vx += ax * h / 2; sm.vy += ay * h / 2;
+    sm.t += h;
+    const rr = Math.hypot(sm.x, sm.y);
+    if (rr <= R) { sm.x *= R / rr; sm.y *= R / rr; sm.status = "crashed"; break; }
+  }
+  sm.trail.push([sm.x, sm.y]);
+  if (sm.trail.length > 2600) sm.trail.shift();
+}
+function draw2() {
+  const { ctx, W, H } = fit(cv2);
+  if (W < 60 || H < 60) return;
+  ctx.fillStyle = "#050a11"; ctx.fillRect(0, 0, W, H);
+  stars(ctx, W, H, 0.9);
+  const Rpx = Math.min((H - 44) / 3.45, (W - 20) / 3.3);
+  const ecx = W / 2, ecy = 26 + R0 / R * Rpx, sc = Rpx / R;
+  const X = x => ecx + x * sc, Y = y => ecy - y * sc;
+  // atmosphere glow + earth
+  const ag = ctx.createRadialGradient(ecx, ecy, Rpx * 0.98, ecx, ecy, Rpx * 1.06);
+  ag.addColorStop(0, "rgba(120,190,255,.45)"); ag.addColorStop(1, "rgba(120,190,255,0)");
+  ctx.fillStyle = ag; ctx.beginPath(); ctx.arc(ecx, ecy, Rpx * 1.06, 0, Math.PI * 2); ctx.fill();
+  const eg = ctx.createRadialGradient(ecx - Rpx * 0.35, ecy - Rpx * 0.4, Rpx * 0.1, ecx, ecy, Rpx);
+  eg.addColorStop(0, "#3f8fbf"); eg.addColorStop(0.7, "#1b5378"); eg.addColorStop(1, "#0d2b45");
+  ctx.fillStyle = eg; ctx.beginPath(); ctx.arc(ecx, ecy, Rpx, 0, Math.PI * 2); ctx.fill();
+  // 400 km reference
+  ctx.save(); ctx.strokeStyle = "rgba(255,255,255,.28)"; ctx.setLineDash([3, 5]);
+  ctx.beginPath(); ctx.arc(ecx, ecy, R0 * sc, 0, Math.PI * 2); ctx.stroke(); ctx.restore();
+  text(ctx, "Earth and 400 km height to scale", 12, H - 14, "rgba(232,238,243,.6)", "left", 10);
+  text(ctx, "Start: 400 km up, moving sideways", ecx + 14, Y(R0) - 12, "rgba(232,238,243,.8)", "left", 11);
+
+  for (const sm of S2.sims) {
+    ctx.save(); ctx.strokeStyle = sm.col; ctx.lineWidth = 2; ctx.lineJoin = "round"; ctx.globalAlpha = 0.9;
+    ctx.beginPath(); sm.trail.forEach((p, i) => i ? ctx.lineTo(X(p[0]), Y(p[1])) : ctx.moveTo(X(p[0]), Y(p[1]))); ctx.stroke(); ctx.restore();
+    const px = X(sm.x), py = Y(sm.y);
+    if (sm.status === "flying" && (px < -30 || px > W + 30 || py < -30 || py > H + 30)) sm.status = "escaped";
+    if (sm.status === "crashed") {
+      ctx.save(); ctx.strokeStyle = sm.col; ctx.lineWidth = 2;
+      for (let k = 0; k < 8; k++) { const a = k * Math.PI / 4; ctx.beginPath(); ctx.moveTo(px + Math.cos(a) * 3, py + Math.sin(a) * 3); ctx.lineTo(px + Math.cos(a) * 9, py + Math.sin(a) * 9); ctx.stroke(); }
+      ctx.restore();
+      if (S2.mode === "single") text(ctx, "impact", px + 12, py, "#ffffff", "left", 11);
+      continue;
+    }
+    if (sm.status === "escaped") continue;
+    if (S2.mode === "single") {
+      const kp = Rpx / 13, r = Math.hypot(sm.x, sm.y);
+      arrow(ctx, px, py, px + sm.vx * kp, py - sm.vy * kp, "#ffffff", 2.5);
+      const g = (R0 / r) ** 2 * 34;
+      arrow(ctx, px, py, px - sm.x / r * g, py + sm.y / r * g, "#ff5d6c", 2.5);
+    }
+    ctx.fillStyle = sm.col; ctx.beginPath(); ctx.arc(px, py, 5, 0, Math.PI * 2); ctx.fill();
+    ctx.strokeStyle = "#ffffff"; ctx.lineWidth = 1.5; ctx.stroke();
+  }
+  if (S2.mode === "single") {
+    const sm = S2.sims[0];
+    const alt = Math.hypot(sm.x, sm.y) - R;
+    setHTML($("r2alt"), sm.status === "escaped" ? "leaving" : `${fmt(Math.max(0, alt))}<small>km</small>`);
+    text(ctx, `t + ${mmss(sm.t)}`, 12, 16, "#e8eef3", "left", 12);
+  }
+}
+function tick2(dt) {
+  if (reduce && S2.elapsed > 0.5) { /* draw once with a short pre-run so the path is visible */ }
+  const steps = reduce && S2.elapsed === 0 ? 0 : 1;
+  if (reduce && S2.elapsed === 0) {
+    for (let k = 0; k < 400; k++) S2.sims.forEach(sm => stepSim(sm, 0.05));
+    S2.elapsed = 1; draw2(); return;
+  }
+  if (reduce) return;
+  if (visible.get(cv2) === false) return;
+  S2.elapsed += dt;
+  S2.sims.forEach(sm => stepSim(sm, dt * steps));
+  draw2();
+  if (S2.mode === "single") {
+    if (S2.sims[0].status !== "flying") { S2.hold += dt; if (S2.hold > 2.8) reset2(); }
+  } else if (S2.elapsed > 24) reset2();
+}
+v2.addEventListener("input", () => { if (reduce) { S2.elapsed = 0; } });
+document.querySelectorAll(".presets button").forEach(bt => bt.addEventListener("click", () => { if (reduce) S2.elapsed = 0; }));
+
+/* =========================================================
+   3. CSF AND FLUID SHIFT
+   ========================================================= */
+const PH3 = [
+  { name: "Standing on Earth", short: "Standing", head: 4, lumbar: 45, shift: 0, vent: 1, flat: 0, disc: 0, folds: 0, g: 1, rot: -90, hip: 0, knee: 0, sh: 8, el: 12, hx: .40, hy: .49, floor: 1, bed: 0, seat: 0, station: 0,
+    felt: "1 g, head → feet",
+    text: "Gravity pulls fluid toward the feet. Like water in a tall bottle, pressure is lowest at the top and highest at the bottom: low in the head, high in the lumbosacral spine. We spend most waking hours upright, so the brain gets daily relief from pressure." },
+  { name: "Lying flat on Earth", short: "Lying flat", head: 16, lumbar: 17, shift: .45, vent: 1, flat: 0, disc: 0, folds: 0, g: 1, rot: -180, hip: 0, knee: 0, sh: 12, el: 10, hx: .56, hy: .70, floor: 0, bed: 1, seat: 0, station: 0,
+    felt: "1 g, front → back",
+    text: "Lying down removes the head-to-foot column of fluid. Pressure evens out along the neuraxis and the pressure in the head rises to about 14–18 cmH₂O. On Earth this happens mainly at night." },
+  { name: "Launch, lying on back", short: "Launch", head: 17, lumbar: 17, shift: .6, vent: 1, flat: 0, disc: 0, folds: 0, g: 3, rot: -180, hip: 90, knee: 90, sh: 28, el: 50, hx: .55, hy: .72, floor: 0, bed: 0, seat: 1, station: 0,
+    felt: "about 3–4 g, chest → back",
+    text: "Crews launch lying on their backs with knees raised. Thrust presses them into the seat from chest to back at up to about 3–4 g, so there is still little head-to-foot pressure difference. Pressure in the head is close to the lying-flat level." },
+  { name: "In orbit, first days", short: "Orbit: days", head: 16, lumbar: 16, shift: 1, vent: 1.04, flat: .12, disc: .1, folds: 0, g: 0, rot: -78, hip: 50, knee: 55, sh: 75, el: 45, hx: .47, hy: .53, floor: 0, bed: 0, seat: 0, station: 1,
+    felt: "none: free fall (gravity is still 89%)",
+    text: "After engine cut-off the station and crew fall together, so nothing pushes back and there is no top-to-bottom pressure difference. Whether the astronaut is 'standing', 'lying' or 'reclining', pressure is about the same all along the neuraxis. CSF and blood that would sit lower in the body shift toward the head: a puffy face and thinner legs." },
+  { name: "In orbit, weeks to months", short: "Orbit: months", head: 16, lumbar: 16, shift: .9, vent: 1.16, flat: 1, disc: 1, folds: 1, g: 0, rot: -78, hip: 50, knee: 55, sh: 75, el: 45, hx: .47, hy: .53, floor: 0, bed: 0, seat: 0, station: 1,
+    felt: "none: free fall (gravity is still 89%)",
+    text: "The brain never gets the daily upright relief. Pressure in the head stays near the lying-flat level all day and night, modestly above the Earth-day average. CSF spaces, including the ventricles, enlarge. The pressure is carried along the optic nerve sheath to the back of the eye: the globe flattens, the optic disc swells, choroidal folds form and the eye becomes more long-sighted. Together these make up SANS." }
+];
+const KEYS = ["head", "lumbar", "shift", "vent", "flat", "disc", "folds", "g", "rot", "hip", "knee", "sh", "el", "hx", "hy", "floor", "bed", "seat", "station"];
+const S3 = { idx: 0, cur: {}, playing: false, timer: 0, clock: 0 };
+KEYS.forEach(k => S3.cur[k] = PH3[0][k]);
+const steps3 = $("steps3"), play3 = $("play3");
+PH3.forEach((p, i) => {
+  const bt = document.createElement("button");
+  bt.textContent = p.short; bt.setAttribute("aria-pressed", String(i === 0));
+  bt.addEventListener("click", () => { S3.playing = false; play3.textContent = "Play sequence"; select3(i); });
+  steps3.appendChild(bt);
+});
+function select3(i) {
+  S3.idx = i; S3.timer = 0;
+  [...steps3.children].forEach((b, j) => b.setAttribute("aria-pressed", String(j === i)));
+  const p = PH3[i];
+  $("cap3t").textContent = p.name; $("cap3x").textContent = p.text;
+  setHTML($("r3f"), p.felt);
+}
+play3.addEventListener("click", () => {
+  S3.playing = !S3.playing; play3.textContent = S3.playing ? "Pause sequence" : "Play sequence";
+  if (S3.playing && S3.idx === PH3.length - 1) select3(0);
+  S3.timer = 0;
+});
+select3(0);
+const cvBody = $("cvBody"), cvHead = $("cvHead"), cvAxis = $("cvAxis"), cvDay = $("cvDay");
+[cvBody, cvHead, cvAxis, cvDay].forEach(c => io.observe(c));
+
+const PSTOPS = [[-5, [46, 74, 115]], [16, [54, 179, 198]], [46, [243, 181, 74]]];
+function pRGB(p) {
+  p = clamp(p, -5, 46);
+  for (let i = 0; i < PSTOPS.length - 1; i++) {
+    const [a, ca] = PSTOPS[i], [b, cb] = PSTOPS[i + 1];
+    if (p <= b) { const t = (p - a) / (b - a); return [lerp(ca[0], cb[0], t), lerp(ca[1], cb[1], t), lerp(ca[2], cb[2], t)]; }
+  }
+  return PSTOPS[2][1];
+}
+const pcol = (p, a = 1) => { const c = pRGB(p); return `rgba(${c[0] | 0},${c[1] | 0},${c[2] | 0},${a})`; };
+const D2R = Math.PI / 180;
+const dir = a => [Math.cos(a * D2R), Math.sin(a * D2R)];
+
+function drawBody() {
+  const { ctx, W, H } = fit(cvBody), c = S3.cur, u = H, tt = S3.clock;
+  ctx.fillStyle = "#050a11"; ctx.fillRect(0, 0, W, H);
+  // surroundings
+  if (c.station > 0.01) {
+    ctx.save(); ctx.globalAlpha = c.station;
+    ctx.strokeStyle = "rgba(160,190,215,.35)"; ctx.lineWidth = 2;
+    ctx.strokeRect(W * 0.06, H * 0.08, W * 0.88, H * 0.84);
+    ctx.setLineDash([4, 6]); ctx.beginPath(); ctx.moveTo(W * 0.06, H * 0.5); ctx.lineTo(W * 0.94, H * 0.5); ctx.stroke(); ctx.setLineDash([]);
+    text(ctx, "inside the station module", W * 0.08, H * 0.13, "rgba(200,220,235,.7)", "left", 10);
+    ctx.restore();
+  }
+  const bob = c.station * Math.sin(tt * 0.9) * 0.012 * H;
+  const rot = c.rot + c.station * Math.sin(tt * 0.6) * 3;
+  const hip = [c.hx * W, c.hy * H + bob];
+  const torso = dir(rot), TL = 0.26 * u;
+  const neck = [hip[0] + torso[0] * TL, hip[1] + torso[1] * TL];
+  const headC = [neck[0] + torso[0] * 0.10 * u, neck[1] + torso[1] * 0.10 * u];
+  const thA = rot + 180 - c.hip, shA = thA + c.knee;
+  const knee = [hip[0] + dir(thA)[0] * 0.19 * u, hip[1] + dir(thA)[1] * 0.19 * u];
+  const foot = [knee[0] + dir(shA)[0] * 0.19 * u, knee[1] + dir(shA)[1] * 0.19 * u];
+  const shoulder = [hip[0] + torso[0] * TL * 0.9, hip[1] + torso[1] * TL * 0.9];
+  const uaA = rot + 180 - c.sh, faA = uaA - c.el;
+  const elbow = [shoulder[0] + dir(uaA)[0] * 0.14 * u, shoulder[1] + dir(uaA)[1] * 0.14 * u];
+  const hand = [elbow[0] + dir(faA)[0] * 0.13 * u, elbow[1] + dir(faA)[1] * 0.13 * u];
+  const back = dir(rot - 90);
+
+  if (c.floor > 0.01) { ctx.globalAlpha = c.floor; ctx.fillStyle = "#2a3a4a"; ctx.fillRect(W * 0.1, foot[1] + 0.012 * u, W * 0.8, 3); text(ctx, "ground", W * 0.12, foot[1] + 0.05 * u, "rgba(200,220,235,.6)", "left", 10); ctx.globalAlpha = 1; }
+  if (c.bed > 0.01) { ctx.globalAlpha = c.bed; ctx.fillStyle = "#223140"; ctx.fillRect(W * 0.14, hip[1] + 0.06 * u, W * 0.76, 0.05 * u); ctx.globalAlpha = 1; }
+  if (c.seat > 0.01) {
+    ctx.save(); ctx.globalAlpha = c.seat; ctx.strokeStyle = "#7d93a8"; ctx.lineWidth = 5; ctx.lineCap = "round";
+    ctx.beginPath(); ctx.moveTo(hip[0] - 0.44 * u, hip[1] + 0.065 * u); ctx.lineTo(hip[0] + 0.02 * u, hip[1] + 0.065 * u);
+    ctx.lineTo(hip[0] + 0.04 * u, hip[1] - 0.18 * u); ctx.lineTo(foot[0] + 0.02 * u, foot[1] + 0.05 * u); ctx.stroke();
+    text(ctx, "launch seat", hip[0] - 0.42 * u, hip[1] + 0.12 * u, "rgba(200,220,235,.7)", "left", 10);
+    ctx.restore();
+  }
+  const seg = (a, b, w, col) => { ctx.strokeStyle = col; ctx.lineWidth = w; ctx.lineCap = "round"; ctx.beginPath(); ctx.moveTo(a[0], a[1]); ctx.lineTo(b[0], b[1]); ctx.stroke(); };
+  const legW = 1 - 0.2 * c.shift;
+  const parts = [[hip, knee, 0.075 * u * legW], [knee, foot, 0.06 * u * legW], [hip, neck, 0.12 * u], [shoulder, elbow, 0.048 * u], [elbow, hand, 0.042 * u]];
+  const headR = 0.068 * u * (1 + 0.07 * c.shift);
+  for (const [a, b, w] of parts) seg(a, b, w + 3, "#9fb4c7");
+  ctx.fillStyle = "#9fb4c7"; ctx.beginPath(); ctx.arc(headC[0], headC[1], headR + 1.5, 0, Math.PI * 2); ctx.fill();
+  for (const [a, b, w] of parts) seg(a, b, w, "#2b3b4c");
+  ctx.fillStyle = "#2b3b4c"; ctx.beginPath(); ctx.arc(headC[0], headC[1], headR, 0, Math.PI * 2); ctx.fill();
+  // fluid tint: legs lose fluid, head gains it
+  const legA = 0.55 * (1 - c.shift) + 0.08;
+  seg(hip, knee, 0.075 * u * legW - 2, `rgba(64,170,205,${legA})`);
+  seg(knee, foot, 0.06 * u * legW - 2, `rgba(64,170,205,${legA})`);
+  ctx.fillStyle = `rgba(64,170,205,${0.12 + 0.5 * c.shift})`; ctx.beginPath(); ctx.arc(headC[0], headC[1], headR - 1.5, 0, Math.PI * 2); ctx.fill();
+  // brain + ventricles
+  ctx.fillStyle = "#b394a2"; ctx.beginPath(); ctx.arc(headC[0] + torso[0] * 0.01 * u, headC[1] + torso[1] * 0.01 * u, headR * 0.66, 0, Math.PI * 2); ctx.fill();
+  ctx.fillStyle = "#5fd0e8"; ctx.beginPath(); ctx.ellipse(headC[0], headC[1], headR * 0.22 * c.vent, headR * 0.1 * c.vent, rot * D2R, 0, Math.PI * 2); ctx.fill();
+  // spinal canal coloured by local CSF pressure
+  const top = [neck[0] + torso[0] * 0.03 * u + back[0] * 0.03 * u, neck[1] + torso[1] * 0.03 * u + back[1] * 0.03 * u];
+  const bot = [hip[0] - torso[0] * 0.01 * u + back[0] * 0.03 * u, hip[1] - torso[1] * 0.01 * u + back[1] * 0.03 * u];
+  const lg = ctx.createLinearGradient(top[0], top[1], bot[0], bot[1]);
+  lg.addColorStop(0, pcol(c.head)); lg.addColorStop(1, pcol(c.lumbar));
+  ctx.strokeStyle = lg; ctx.lineWidth = 6; ctx.lineCap = "round"; ctx.beginPath(); ctx.moveTo(top[0], top[1]); ctx.lineTo(bot[0], bot[1]); ctx.stroke();
+  // CSF particles: crowd toward the low end when there is a felt head-to-foot load
+  const grad = clamp((c.lumbar - c.head) / 41, 0, 1), N = 20;
+  ctx.fillStyle = "rgba(225,250,255,.9)";
+  for (let i = 0; i < N; i++) {
+    const u0 = (i + 0.5) / N;
+    let sp = lerp(u0, Math.sqrt(u0), grad) + (1 - grad) * 0.025 * Math.sin(tt * 1.7 + i * 2.1);
+    sp = clamp(sp, 0, 1);
+    const x = lerp(top[0], bot[0], sp), y = lerp(top[1], bot[1], sp);
+    ctx.beginPath(); ctx.arc(x, y, 1.6, 0, Math.PI * 2); ctx.fill();
+  }
+  // felt weight arrow
+  const gx = W * 0.86, gy = H * 0.2;
+  if (c.g > 0.05) {
+    ctx.globalAlpha = Math.min(1, c.g);
+    arrow(ctx, gx, gy, gx, gy + H * (0.09 + 0.05 * Math.min(c.g, 3)), "#ff5d6c", 2 + 1.4 * Math.min(c.g, 3));
+    ctx.globalAlpha = 1;
+  }
+  text(ctx, "felt weight", gx, gy - 14, "rgba(232,238,243,.75)", "center", 10);
+  if (c.g < 0.5) text(ctx, "none", gx, gy + 12, "#ffffff", "center", 12);
+  if (c.shift > 0.75) {
+    text(ctx, "puffy face", headC[0] + headR + 8, headC[1] - headR, "rgba(120,215,240,.95)", "left", 10);
+    text(ctx, "thinner legs", foot[0] + 8, foot[1] + 4, "rgba(120,215,240,.95)", "left", 10);
+  }
+}
+
+function drawHead() {
+  const { ctx, W, H } = fit(cvHead), c = S3.cur;
+  ctx.fillStyle = "#050a11"; ctx.fillRect(0, 0, W, H);
+  const cx = W * 0.29, cy = H * 0.5, rx = W * 0.21, ry = H * 0.36;
+  // skull, CSF layer, brain
+  ctx.fillStyle = "#1a2633"; ctx.strokeStyle = "#8aa0b4"; ctx.lineWidth = 3;
+  ctx.beginPath(); ctx.ellipse(cx, cy, rx, ry, 0, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+  ctx.fillStyle = pcol(c.head, 0.75); ctx.beginPath(); ctx.ellipse(cx, cy, rx * 0.93, ry * 0.93, 0, 0, Math.PI * 2); ctx.fill();
+  const bs = 1 - 0.02 * (c.vent - 1);
+  ctx.fillStyle = "#b394a2"; ctx.beginPath(); ctx.ellipse(cx - rx * 0.02, cy - ry * 0.04, rx * 0.84 * bs, ry * 0.8 * bs, 0, 0, Math.PI * 2); ctx.fill();
+  ctx.strokeStyle = "rgba(90,55,75,.55)"; ctx.lineWidth = 1.5;
+  for (let k = 0; k < 6; k++) { const a = -2.6 + k * 0.42; ctx.beginPath(); ctx.arc(cx + Math.cos(a) * rx * 0.55, cy + Math.sin(a) * ry * 0.55, rx * 0.16, a + 1.2, a + 2.6); ctx.stroke(); }
+  // ventricles
+  const v = c.vent, vw = rx * 0.34 * (1 + (v - 1) * 2.2), vh = ry * 0.11 * (1 + (v - 1) * 2.6);
+  ctx.fillStyle = "#5fd0e8";
+  ctx.beginPath(); ctx.ellipse(cx - rx * 0.04, cy - ry * 0.08, vw, vh, -0.12, 0, Math.PI * 2); ctx.fill();
+  ctx.beginPath(); ctx.ellipse(cx - rx * 0.32, cy + ry * 0.08, vw * 0.3, vh * 0.9, 0.9, 0, Math.PI * 2); ctx.fill();
+  ctx.beginPath(); ctx.ellipse(cx - rx * 0.12, cy + ry * 0.38, vw * 0.13, vh * 0.7, 0, 0, Math.PI * 2); ctx.fill();
+  text(ctx, "ventricles", cx - rx * 0.04, cy - ry * 0.08 - vh - 9, "#e8f6fb", "center", 10);
+  text(ctx, "CSF", cx - rx * 0.62, cy - ry * 0.86, "#e8f6fb", "center", 10);
+  // eye and optic nerve inside the head
+  const sex = cx + rx * 0.8, sey = cy + ry * 0.08, ser = rx * 0.13;
+  ctx.strokeStyle = pcol(c.head, 0.9); ctx.lineWidth = 6; ctx.beginPath(); ctx.moveTo(sex - ser, sey); ctx.quadraticCurveTo(cx + rx * 0.45, sey + ry * 0.05, cx + rx * 0.25, sey + ry * 0.02); ctx.stroke();
+  ctx.strokeStyle = "#e6d9c2"; ctx.lineWidth = 2.5; ctx.stroke();
+  ctx.fillStyle = "#d9dfe6"; ctx.beginPath(); ctx.arc(sex, sey, ser, 0, Math.PI * 2); ctx.fill();
+  // zoom circle
+  const zr = Math.min(W * 0.23, H * 0.42), zx = W * 0.76, zy = H * 0.5;
+  ctx.strokeStyle = "rgba(200,220,235,.35)"; ctx.lineWidth = 1;
+  ctx.beginPath(); ctx.moveTo(sex, sey - ser); ctx.lineTo(zx - zr * 0.5, zy - zr * 0.87); ctx.moveTo(sex, sey + ser); ctx.lineTo(zx - zr * 0.5, zy + zr * 0.87); ctx.stroke();
+  ctx.save(); ctx.beginPath(); ctx.arc(zx, zy, zr, 0, Math.PI * 2); ctx.fillStyle = "#0c1520"; ctx.fill(); ctx.clip();
+  const ex = zx + zr * 0.18, ey = zy, r = zr * 0.55;
+  const backX = ex - r * (1 - 0.14 * c.flat);
+  // optic nerve and its CSF-filled sheath
+  const nW = r * 0.3, gap = r * (0.03 + 0.06 * clamp(c.head / 16, 0, 1.2) + 0.05 * c.flat);
+  ctx.fillStyle = pcol(c.head, 0.9); ctx.fillRect(zx - zr, ey - nW / 2 - gap, backX - (zx - zr) + 2, nW + 2 * gap);
+  ctx.strokeStyle = "#8aa0b4"; ctx.lineWidth = 1.5;
+  ctx.beginPath(); ctx.moveTo(zx - zr, ey - nW / 2 - gap); ctx.lineTo(backX, ey - nW / 2 - gap); ctx.moveTo(zx - zr, ey + nW / 2 + gap); ctx.lineTo(backX, ey + nW / 2 + gap); ctx.stroke();
+  ctx.fillStyle = "#e6d9c2"; ctx.fillRect(zx - zr, ey - nW / 2, backX - (zx - zr) + 2, nW);
+  // globe with flattened back
+  const globe = (k) => { ctx.beginPath(); for (let i = 0; i <= 120; i++) { const a = i / 120 * Math.PI * 2; const x = Math.max(r * k * Math.cos(a), -r * k * (1 - 0.14 * c.flat)); const y = r * k * Math.sin(a); i ? ctx.lineTo(ex + x, ey + y) : ctx.moveTo(ex + x, ey + y); } ctx.closePath(); };
+  globe(1); ctx.fillStyle = "#d9dfe6"; ctx.fill();
+  globe(0.9); ctx.fillStyle = "#15212d"; ctx.fill();
+  ctx.strokeStyle = "#c8645a"; ctx.lineWidth = 2; globe(0.9); ctx.stroke();
+  // choroidal folds
+  if (c.folds > 0.02) {
+    ctx.save(); ctx.globalAlpha = c.folds; ctx.strokeStyle = "#e08a7a"; ctx.lineWidth = 1.2;
+    for (let k = 0; k < 4; k++) {
+      const x0 = ex - r * 0.9 * (1 - 0.14 * c.flat) + r * (0.06 + k * 0.05);
+      ctx.beginPath();
+      for (let j = 0; j <= 20; j++) { const y = ey - r * 0.45 + j * r * 0.045; const x = x0 + Math.sin(j * 1.3 + k) * r * 0.015; j ? ctx.lineTo(x, y) : ctx.moveTo(x, y); }
+      ctx.stroke();
+    }
+    ctx.restore();
+  }
+  // optic disc
+  const discX = ex - r * 0.9 * (1 - 0.14 * c.flat);
+  ctx.fillStyle = "#f2b37a"; ctx.beginPath(); ctx.ellipse(discX, ey, r * (0.03 + 0.08 * c.disc), r * 0.13, 0, -Math.PI / 2, Math.PI / 2); ctx.fill();
+  // lens and cornea
+  ctx.fillStyle = "rgba(200,230,255,.55)"; ctx.beginPath(); ctx.ellipse(ex + r * 0.6, ey, r * 0.11, r * 0.32, 0, 0, Math.PI * 2); ctx.fill();
+  ctx.strokeStyle = "#d9dfe6"; ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(ex + r * 0.5, ey, r * 0.55, -0.85, 0.85); ctx.stroke();
+  // light rays focus at the original retina; a flattened eye puts the retina in front of the focus
+  const F = [ex - r * 0.9, ey], lensX = ex + r * 0.6, retX = discX;
+  ctx.strokeStyle = "rgba(255,236,170,.85)"; ctx.lineWidth = 1.2;
+  for (const dy of [-0.26, 0, 0.26]) {
+    const y0 = ey + dy * r;
+    ctx.beginPath(); ctx.moveTo(zx + zr, y0); ctx.lineTo(lensX, y0);
+    const tHit = (lensX - retX) / (lensX - F[0]);
+    ctx.lineTo(lerp(lensX, F[0], tHit), lerp(y0, F[1], tHit)); ctx.stroke();
+    if (tHit < 0.995) { ctx.save(); ctx.setLineDash([2, 3]); ctx.beginPath(); ctx.moveTo(lerp(lensX, F[0], tHit), lerp(y0, F[1], tHit)); ctx.lineTo(F[0], F[1]); ctx.stroke(); ctx.restore(); }
+  }
+  ctx.restore();
+  ctx.strokeStyle = "rgba(200,220,235,.5)"; ctx.lineWidth = 1.5; ctx.beginPath(); ctx.arc(zx, zy, zr, 0, Math.PI * 2); ctx.stroke();
+  text(ctx, "eye ×8", zx, zy + zr + 12, "rgba(232,238,243,.7)", "center", 10);
+  text(ctx, "optic nerve sheath", zx - zr * 0.95, zy - zr * 0.28, "#e8f6fb", "left", 10);
+  if (c.flat > 0.4) text(ctx, "focus behind retina", zx - zr * 0.95, zy + zr * 0.36, "rgba(255,236,170,.95)", "left", 10);
+}
+
+function drawAxis() {
+  const { ctx, W, H } = fit(cvAxis), c = S3.cur;
+  ctx.fillStyle = "#050a11"; ctx.fillRect(0, 0, W, H);
+  const L = Math.min(110, W * 0.26), Rm = 16, T = 16, B = 34;
+  const X = p => L + (p + 5) / 55 * (W - L - Rm), Y = y => T + y * (H - T - B);
+  // lying-flat band
+  ctx.fillStyle = "rgba(54,179,198,.14)"; ctx.fillRect(X(14), T, X(18) - X(14), H - T - B);
+  text(ctx, "lying flat", (X(14) + X(18)) / 2, T + 8, "rgba(120,215,240,.9)", "center", 10);
+  ctx.strokeStyle = "rgba(200,220,235,.12)"; ctx.lineWidth = 1;
+  for (let p = 0; p <= 50; p += 10) { ctx.beginPath(); ctx.moveTo(X(p), T); ctx.lineTo(X(p), H - B); ctx.stroke(); text(ctx, String(p), X(p), H - B + 12, "rgba(200,220,235,.7)", "center", 10); }
+  text(ctx, "CSF pressure, cmH₂O", (L + W - Rm) / 2, H - 8, "rgba(200,220,235,.7)", "center", 10);
+  const levels = [[0, "Head (ICP)"], [0.33, "Neck"], [0.62, "Chest"], [1, "Lumbosacral"]];
+  levels.forEach(([y, l]) => text(ctx, l, 10, Y(y), "rgba(232,238,243,.85)", "left", 11));
+  const line = (h, l, col, w, dash) => {
+    ctx.save(); ctx.strokeStyle = col; ctx.lineWidth = w; if (dash) ctx.setLineDash(dash);
+    ctx.beginPath(); ctx.moveTo(X(h), Y(0)); ctx.lineTo(X(l), Y(1)); ctx.stroke(); ctx.restore();
+  };
+  if (S3.idx !== 0) { line(4, 45, "rgba(232,238,243,.35)", 1.5, [4, 4]); text(ctx, "standing on Earth", X(45) - 4, Y(1) - 10, "rgba(232,238,243,.55)", "right", 10); }
+  line(c.head, c.lumbar, "rgba(232,238,243,.9)", 2.5);
+  levels.forEach(([y]) => { const p = lerp(c.head, c.lumbar, y); ctx.fillStyle = pcol(p); ctx.beginPath(); ctx.arc(X(p), Y(y), 6, 0, Math.PI * 2); ctx.fill(); ctx.strokeStyle = "#050a11"; ctx.lineWidth = 2; ctx.stroke(); });
+}
+
+const earthICP = h => { // 07:00–23:00 upright, rest lying down
+  const up = smooth(6.6, 7.2, h) * (1 - smooth(22.8, 23.4, h));
+  return lerp(16, 4, up);
+};
+const EARTH_AVG = (() => { let s = 0; for (let i = 0; i < 2400; i++) s += earthICP(i / 100); return s / 2400; })();
+function drawDay() {
+  const { ctx, W, H } = fit(cvDay);
+  ctx.fillStyle = "#050a11"; ctx.fillRect(0, 0, W, H);
+  const L = 40, Rm = 14, T = 18, B = 34;
+  const X = h => L + h / 24 * (W - L - Rm), Y = p => T + (1 - p / 20) * (H - T - B);
+  ctx.strokeStyle = "rgba(200,220,235,.12)"; ctx.lineWidth = 1;
+  for (let p = 0; p <= 20; p += 5) { ctx.beginPath(); ctx.moveTo(L, Y(p)); ctx.lineTo(W - Rm, Y(p)); ctx.stroke(); text(ctx, String(p), L - 8, Y(p), "rgba(200,220,235,.7)", "right", 10); }
+  for (let h = 0; h <= 24; h += 6) text(ctx, `${String(h).padStart(2, "0")}:00`, X(h), H - B + 12, "rgba(200,220,235,.7)", "center", 10);
+  text(ctx, "cmH₂O", 6, 8, "rgba(200,220,235,.7)", "left", 10);
+  const orbitOn = S3.idx >= 3, earthOn = S3.idx <= 1;
+  const trace = (f, col, w, alpha) => { ctx.save(); ctx.globalAlpha = alpha; ctx.strokeStyle = col; ctx.lineWidth = w; ctx.beginPath(); for (let i = 0; i <= 240; i++) { const h = i / 10; i ? ctx.lineTo(X(h), Y(f(h))) : ctx.moveTo(X(h), Y(f(h))); } ctx.stroke(); ctx.restore(); };
+  trace(earthICP, "#f4c35a", earthOn ? 3 : 1.6, earthOn ? 1 : 0.5);
+  trace(h => 16 + 0.4 * Math.sin(h * 2.3), "#5fd0e8", orbitOn ? 3 : 1.6, orbitOn ? 1 : 0.5);
+  ctx.save(); ctx.setLineDash([3, 4]); ctx.lineWidth = 1;
+  ctx.strokeStyle = "rgba(244,195,90,.7)"; ctx.beginPath(); ctx.moveTo(L, Y(EARTH_AVG)); ctx.lineTo(W - Rm, Y(EARTH_AVG)); ctx.stroke(); ctx.restore();
+  text(ctx, `Earth day · average ≈ ${fmt(EARTH_AVG)}`, X(12), Y(EARTH_AVG) + 10, "rgba(244,195,90,.95)", "center", 10);
+  text(ctx, "In orbit · steady ≈ 16, day and night", X(12), Y(16) - 16, "rgba(95,208,232,.95)", "center", 10);
+  text(ctx, "asleep", X(3), Y(16) + 12, "rgba(244,195,90,.8)", "center", 10);
+  text(ctx, "upright", X(15), Y(4) + 11, "rgba(244,195,90,.8)", "center", 10);
+  // clock cursor
+  const h = (S3.clock * 2) % 24;
+  ctx.strokeStyle = "rgba(255,255,255,.3)"; ctx.beginPath(); ctx.moveTo(X(h), T); ctx.lineTo(X(h), H - B); ctx.stroke();
+  ctx.fillStyle = "#f4c35a"; ctx.beginPath(); ctx.arc(X(h), Y(earthICP(h)), 4, 0, Math.PI * 2); ctx.fill();
+  ctx.fillStyle = "#5fd0e8"; ctx.beginPath(); ctx.arc(X(h), Y(16 + 0.4 * Math.sin(h * 2.3)), 4, 0, Math.PI * 2); ctx.fill();
+}
+
+function tick3(dt) {
+  if (!reduce) S3.clock += dt;
+  if (S3.playing) { S3.timer += dt; if (S3.timer > 5.5) { if (S3.idx < PH3.length - 1) select3(S3.idx + 1); else { S3.playing = false; play3.textContent = "Play sequence"; } } }
+  const tgt = PH3[S3.idx], k = reduce ? 1 : 1 - Math.exp(-dt * 3);
+  KEYS.forEach(key => S3.cur[key] += (tgt[key] - S3.cur[key]) * k);
+  const c = S3.cur;
+  setHTML($("r3h"), `${fmt(c.head)}<small>cmH₂O</small>`);
+  setHTML($("r3l"), `${fmt(c.lumbar)}<small>cmH₂O</small>`);
+  setHTML($("r3d"), `${fmt(Math.abs(c.lumbar - c.head))}<small>cmH₂O</small>`);
+  setHTML($("r3s"), `${fmt(c.shift * 100)}<small>%</small>`);
+  const on = { vent: c.vent > 1.08, sheath: c.flat > 0.5, flat: c.flat > 0.5, disc: c.disc > 0.5, folds: c.folds > 0.5, hyper: c.flat > 0.5 };
+  document.querySelectorAll("#find3 li").forEach(li => li.classList.toggle("on", on[li.dataset.k]));
+  if (visible.get(cvBody) !== false) drawBody();
+  if (visible.get(cvHead) !== false) drawHead();
+  if (visible.get(cvAxis) !== false) drawAxis();
+  if (visible.get(cvDay) !== false) drawDay();
+}
+
+/* ========================================================= */
+reset2();
+let last = performance.now();
+function frame(now) {
+  const dt = Math.min(0.05, (now - last) / 1000); last = now;
+  try { tick1(dt); tick2(dt); tick3(dt); } catch (e) { console.error(e); }
+  requestAnimationFrame(frame);
+}
+addEventListener("resize", () => { S1.dirty = true; if (reduce) { draw2(); } });
+requestAnimationFrame(frame);
+})();
+</script>
+</body>
+</html>
